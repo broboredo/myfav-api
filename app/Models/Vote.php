@@ -12,6 +12,6 @@ class Vote extends Model
 
     public function character()
     {
-        return $this->hasOne(Character::class);
+        return $this->belongsTo(Character::class);
     }
 }
