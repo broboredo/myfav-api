@@ -9,7 +9,8 @@ class Character extends Model
     protected $fillable = [
         'name',
         'img',
-        'is_first'
+        'is_first',
+        'sitcom_name'
     ];
 
     protected $hidden = [
@@ -30,13 +31,20 @@ class Character extends Model
         return $this->hasMany(Vote::class);
     }
 
-    public static function ranking()
-    {
-        return Character::withCount('votes')->orderBy('votes_count', 'desc');
-    }
-
     public function getIsFirstAttribute(): bool
     {
         return self::ranking()->first()->id === $this->id ? true : false;
+    }
+
+    public function getSitcomName(): string
+    {
+        return $this->sitcom->name;
+    }
+
+    public static function ranking()
+    {
+        return Character::with('sitcom')
+            ->withCount('votes')
+            ->orderBy('votes_count', 'desc');
     }
 }
