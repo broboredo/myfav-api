@@ -58,7 +58,7 @@ class Api extends Controller
         $characterOne = $request->character_one;
         $characterTwo = $request->character_two;
 
-        $appearances = Appearance::where(function($q) use ($characterOne, $characterTwo) {
+        $appearancesCount = Appearance::where(function($q) use ($characterOne, $characterTwo) {
             $q->where('character_one', $characterOne)
                 ->where('character_two', $characterTwo);
         })
@@ -66,16 +66,17 @@ class Api extends Controller
             $q->where('character_one', $characterTwo)
                 ->where('character_two', $characterOne);
         })
-        ->get();
+        ->count();
 
         $votes = Vote::with([
-            'character'
+            'character',
+            'character.sitcom'
         ])
         ->select([
             'votes.character_id',
             \DB::raw('count(*) as votes_count')
         ])
-        ->rightJoin('appearances', function ($query) use ($characterOne, $characterTwo) {
+        ->join('appearances', function ($query) use ($characterOne, $characterTwo) {
             $query->on('appearances.id', '=', 'votes.appearance_id');
         })
         ->where(function ($q) use ($characterOne, $characterTwo) {
@@ -87,21 +88,20 @@ class Api extends Controller
                 ->where('character_two', $characterOne);
         })
         ->groupBy('votes.character_id')
+        ->orderBy('votes_count', 'desc')
         ->get();
 
-        $sum = 0;
-        $votes->each(function($vote) use(&$sum) {
-            $sum += $vote->votes_count;
+        $totalVotes = 0;
+        $votes->each(function($vote) use(&$totalVotes) {
+            $totalVotes += $vote->votes_count;
         });
 
-        if($sum !== $appearances->count()) {
-            throw new \Exception('error_sum', 422);
-        }
-
+        $skips = $appearancesCount - $totalVotes;
 
         return new JsonResponse([
-            'count' => $appearances->count(),
-            'votes' => $votes
+            'count' => $appearancesCount,
+            'votes' => $votes,
+            'skips' => $skips
         ]);
     }
 
