@@ -74,7 +74,8 @@ class Api extends Controller
         ])
         ->select([
             'characters.*',
-            \DB::raw('count(votes.character_id) as votes_count')
+            \DB::raw('count(votes.character_id) as votes_count'),
+            \DB::raw('count(appearances.id) as total_appearances'),
         ])
         ->leftJoin('appearances', function ($query) {
             $query->on('appearances.character_one', 'characters.id')
@@ -100,10 +101,16 @@ class Api extends Controller
         ])
         ->groupBy('characters.id')
         ->orderBy('votes_count', 'desc')
+        ->orderBy('total_appearances', 'asc')
         ->get();
 
         $totalVotes = 0;
-        $characters->each(function ($vote) use (&$totalVotes) {
+        $isDraw = false;
+        $characters->each(function ($vote, $key) use (&$totalVotes, &$isDraw) {
+            if($key === 1 && $totalVotes === $vote->votes_count) {
+                $isDraw = true;
+            }
+
             $totalVotes += $vote->votes_count;
         });
 
@@ -112,7 +119,8 @@ class Api extends Controller
         return new JsonResponse([
             'count' => $appearancesCount,
             'characters' => $characters,
-            'skips' => $skips
+            'skips' => $skips,
+            'draw' => $isDraw
         ]);
     }
 

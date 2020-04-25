@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Character extends Model
 {
     protected $fillable = [
-        'name',
+        'name', //max 18 chars
         'img',
         'is_first',
         'sitcom_name'
@@ -18,7 +18,8 @@ class Character extends Model
     ];
 
     protected $appends = [
-        'is_first'
+        'is_first',
+        'total_appearances'
     ];
 
     public function sitcom()
@@ -46,5 +47,16 @@ class Character extends Model
         return Character::with('sitcom')
             ->withCount('votes')
             ->orderBy('votes_count', 'desc');
+    }
+
+    public function appearances()
+    {
+        return Appearance::where('character_one', $this->id)
+            ->orWhere('character_two', $this->id);
+    }
+
+    public function getTotalAppearancesAttribute()
+    {
+        return $this->appearances()->count();
     }
 }
