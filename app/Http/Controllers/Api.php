@@ -58,41 +58,52 @@ class Api extends Controller
         $characterOne = $request->character_one;
         $characterTwo = $request->character_two;
 
-        $appearancesCount = Appearance::where(function($q) use ($characterOne, $characterTwo) {
-            $q->where('character_one', $characterOne)
+        $appearances = Appearance::where(function ($query) use ($characterOne, $characterTwo) {
+            $query->where('character_one', $characterOne)
                 ->where('character_two', $characterTwo);
         })
-        ->orWhere(function($q) use ($characterOne, $characterTwo) {
-            $q->where('character_one', $characterTwo)
-                ->where('character_two', $characterOne);
-        })
-        ->count();
+            ->orWhere(function ($query) use ($characterOne, $characterTwo) {
+                $query->where('character_one', $characterTwo)
+                    ->where('character_two', $characterOne);
+            })->get();
 
-        $votes = Vote::with([
-            'character',
-            'character.sitcom'
+        $appearancesCount = $appearances->count();
+
+        $characters = Character::with([
+            'sitcom'
         ])
         ->select([
-            'votes.character_id',
-            \DB::raw('count(*) as votes_count')
+            'characters.*',
+            \DB::raw('count(votes.character_id) as votes_count')
         ])
-        ->join('appearances', function ($query) use ($characterOne, $characterTwo) {
-            $query->on('appearances.id', '=', 'votes.appearance_id');
+        ->leftJoin('appearances', function ($query) {
+            $query->on('appearances.character_one', 'characters.id')
+                ->orOn('appearances.character_two', 'characters.id');
         })
-        ->where(function ($q) use ($characterOne, $characterTwo) {
-            $q->where('character_one', $characterOne)
-                ->where('character_two', $characterTwo);
+        ->leftJoin('votes', function ($query) use ($characterOne, $characterTwo) {
+            $query->on('votes.appearance_id', 'appearances.id')
+                ->on('votes.character_id', 'characters.id')
+                ->on(function ($subQuery) use ($characterOne, $characterTwo) {
+                    $subQuery->where(function ($q) use ($characterOne, $characterTwo) {
+                        $q->where('appearances.character_one', $characterOne)
+                            ->where('appearances.character_two', $characterTwo);
+                    })
+                        ->orWhere(function ($q) use ($characterOne, $characterTwo) {
+                            $q->where('appearances.character_one', $characterTwo)
+                                ->where('appearances.character_two', $characterOne);
+                        });
+                });
         })
-        ->orWhere(function ($q) use ($characterOne, $characterTwo) {
-            $q->where('character_one', $characterTwo)
-                ->where('character_two', $characterOne);
-        })
-        ->groupBy('votes.character_id')
+        ->whereIn('characters.id', [
+            $characterOne,
+            $characterTwo
+        ])
+        ->groupBy('characters.id')
         ->orderBy('votes_count', 'desc')
         ->get();
 
         $totalVotes = 0;
-        $votes->each(function($vote) use(&$totalVotes) {
+        $characters->each(function ($vote) use (&$totalVotes) {
             $totalVotes += $vote->votes_count;
         });
 
@@ -100,7 +111,7 @@ class Api extends Controller
 
         return new JsonResponse([
             'count' => $appearancesCount,
-            'votes' => $votes,
+            'characters' => $characters,
             'skips' => $skips
         ]);
     }

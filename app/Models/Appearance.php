@@ -16,8 +16,8 @@ class Appearance extends Model
         return $this->belongsTo(Character::class, 'character_two');
     }
 
-    public function votes()
+    public function vote()
     {
-        return $this->hasMany(Vote::class);
+        return $this->hasOne(Vote::class);
     }
 }
