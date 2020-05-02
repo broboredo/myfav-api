@@ -169,10 +169,12 @@ class Api extends Controller
                 ]);
             }
 
-            Artisan::command($request->command);
+            Artisan::command($request->command, function ($project) {
+                //
+            });
 
             return new JsonResponse([
-                'message' => 'Added'
+                'message' => 'Running'
             ], 200);
 
         } catch(\Exception $e) {

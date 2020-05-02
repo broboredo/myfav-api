@@ -29,7 +29,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('tmdb:sync:sitcoms')->daily()->after(function() {
-            Artisan::command('tmdb:add:characters');
+            Artisan::command('tmdb:add:characters', function ($project) {
+                //
+            });
         });
     }
 
