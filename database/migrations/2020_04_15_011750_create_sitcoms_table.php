@@ -20,6 +20,8 @@ class CreateSitcomsTable extends Migration
             $table->string('logo')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
+            $table->integer('external_id')->nullable();
+            $table->integer('number_of_seasons')->nullable();
             $table->timestamps();
         });
     }

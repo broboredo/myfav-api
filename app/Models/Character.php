@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Character extends Model
 {
+    CONST MAX_NAME_CHAR = 18;
+
     protected $fillable = [
-        'name', //max 18 chars
+        'name',
         'img',
         'is_first',
         'sitcom_name'
@@ -58,5 +61,18 @@ class Character extends Model
     public function getTotalAppearancesAttribute()
     {
         return $this->appearances()->count();
+    }
+
+    public function setNameAttribute($name)
+    {
+        if(Str::length($name) > self::MAX_NAME_CHAR) {
+            if(Str::contains($name, ' ')) {
+                $name = Str::before($name, ' ');
+            } else {
+                $name = Str::substr($name, 0, 17);
+            }
+        }
+
+        $this->attributes['name'] = $name;
     }
 }

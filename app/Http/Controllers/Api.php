@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Appearance;
 use App\Models\Character;
+use App\Models\Sitcom;
 use App\Models\Vote;
+use GuzzleHttp\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Artisan;
 use mysql_xdevapi\Exception;
 
 class Api extends Controller
@@ -124,6 +128,60 @@ class Api extends Controller
         ]);
     }
 
+    public function storeSitcom(Request $request)
+    {
+        try {
+            if($request->token !== env('TOKEN_STORE_SITCOM')) {
+                throw new Exception([
+                    'error'
+                ]);
+            }
+
+            if(!is_array($request->name)) {
+                $newSitcoms[] = $request->name;
+            } else {
+                $newSitcoms = $request->name;
+            }
+
+            foreach ($newSitcoms as $newSitcom) {
+                $sitcom = new Sitcom();
+                $sitcom->name = $newSitcom;
+                $sitcom->save();
+            }
+
+            return new JsonResponse([
+                'message' => 'Added'
+            ], 200);
+
+        } catch(\Exception $e) {
+            return new JsonResponse([
+                'msg' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function runCommand(Request $request)
+    {
+        try {
+            if($request->token !== env('TOKEN_STORE_SITCOM')) {
+                throw new Exception([
+                    'error'
+                ]);
+            }
+
+            Artisan::command($request->command);
+
+            return new JsonResponse([
+                'message' => 'Added'
+            ], 200);
+
+        } catch(\Exception $e) {
+            return new JsonResponse([
+                'msg' => $e->getMessage()
+            ]);
+        }
+    }
+
     private function addAppearance($chosenCharacters): Appearance
     {
         $characterOne = $chosenCharacters->first();
@@ -135,5 +193,41 @@ class Api extends Controller
         $appearance->save();
 
         return $appearance;
+    }
+
+    public function test($search = 'house of cards annette shepherd')
+    {
+
+            $client = new Client();
+            $response = $client->get('https://api.qwant.com/api/search/images?' .
+                'uiv=4&t=images&safesearch=1&locale=en_US&q=' . $search, [
+                'headers' => [
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                throw new Exception([
+                    'search' => $search,
+                    'code' => $response->getStatusCode()
+                ]);
+            }
+
+            /* @var Collection $results */
+            $results = collect(json_decode($response->getBody()->getContents())->data->result->items);
+
+            $result = $results->where('height', '>=', '250');
+            $result = $result->map(function ($r) {
+                return $r->width <= $r->height*1.1;
+            });
+
+            dd($result);
+
+
+            if ($result) {
+                return $result->media;
+            }
+
+            return '';
     }
 }

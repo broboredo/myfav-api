@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Sitcom extends Model
 {
+    CONST BASE_IMG_URL = 'https://image.tmdb.org/t/p/w500';
+
     protected $fillable = [
         'name',
         'logo',
@@ -16,6 +18,11 @@ class Sitcom extends Model
 
     public function characters()
     {
-        $this->hasMany(Character::class);
+        return $this->hasMany(Character::class);
+    }
+
+    public function getLogoAttribute($logo)
+    {
+        return self::BASE_IMG_URL . $logo;
     }
 }

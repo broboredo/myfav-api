@@ -18,6 +18,7 @@ class CreateCharacterTable extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('img');
+            $table->integer('gender')->nullable();
             $table->foreignId('sitcom_id');
             $table->timestamps();
         });
