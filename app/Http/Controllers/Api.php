@@ -227,11 +227,9 @@ class Api extends Controller
                 }
             });
 
-            dd($result);
 
-
-            if ($result) {
-                return $result->media;
+            if ($result->count() > 0) {
+                return $result->get(0)->media;
             }
 
             return '';
