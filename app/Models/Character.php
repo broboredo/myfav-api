@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class Character extends Model
 {
-    CONST MAX_NAME_CHAR = 18;
+    CONST MAX_NAME_CHAR = 17;
 
     protected $fillable = [
         'name',
@@ -69,7 +69,7 @@ class Character extends Model
             if(Str::contains($name, ' ')) {
                 $name = Str::before($name, ' ');
             } else {
-                $name = Str::substr($name, 0, 17);
+                $name = Str::substr($name, 0, (self::MAX_NAME_CHAR-1));
             }
         }
 
