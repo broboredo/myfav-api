@@ -220,7 +220,9 @@ class Api extends Controller
 
             $result = $results->where('height', '>=', '250');
             $result = $result->map(function ($r) {
-                return $r->width <= $r->height*1.1;
+                if($r->width <= $r->height*1.1) {
+                    return $r;
+                };
             });
 
             dd($result);
