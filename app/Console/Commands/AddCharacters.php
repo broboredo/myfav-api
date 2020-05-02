@@ -152,13 +152,17 @@ class AddCharacters extends Command
             $results = collect(json_decode($response->getBody()->getContents())->data->result->items);
 
             $result = $results->where('height', '>=', '250');
-            $result = $result->map(function ($r) {
-                return $r->width <= $r->height*1.1;
+            $result = $result->each(function ($r, $key) use ($result) {
+                if($r->width <= $r->height*1.1) {
+                    //
+                } else {
+                    $result->forget($key);
+                }
             });
 
 
-            if ($result) {
-                return $result->media;
+            if ($result->count() > 0) {
+                return $result->get(0)->media;
             }
 
             return '';
