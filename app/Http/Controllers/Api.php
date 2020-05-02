@@ -219,9 +219,9 @@ class Api extends Controller
             $results = collect(json_decode($response->getBody()->getContents())->data->result->items);
 
             $result = $results->where('height', '>=', '250');
-            $result = $result->each(function ($key, $r) use ($result) {
+            $result = $result->each(function ($r, $key) use ($result) {
                 if($r->width <= $r->height*1.1) {
-                    // 
+                    //
                 } else {
                     $result->forget($key);
                 }
